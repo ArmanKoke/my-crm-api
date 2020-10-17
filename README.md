@@ -11,3 +11,6 @@
 
 Simple crm api with socialite and CRUD.
 
+## Drawbacks
+
+- Did not remove blade and front related staff
