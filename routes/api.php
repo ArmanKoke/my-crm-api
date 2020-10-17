@@ -19,7 +19,7 @@ Route::middleware('auth:api')->group(function () {
         Route::get('profile', [UserProfileController::class, 'show'])->name('profile');
     });
 
-    Route::fallback(function () {
+    Route::fallback(function () { //works only on get mb delete and use middleware instead
         return response()->json(['message' => 'No such route'], 404);
     });
 });
