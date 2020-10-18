@@ -9,7 +9,9 @@ use App\Models\User;
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Contracts\Auth\StatefulGuard;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class AuthController extends Controller
 {
@@ -36,14 +38,29 @@ class AuthController extends Controller
      * @param LoginRequest $request
      * @return JsonResponse
      */
-    public function login(LoginRequest $request): JsonResponse
+    public function login(LoginRequest $request)
     {
         $credentials = $request->only('email', 'password');
-        dd($this->guard()->attempt($credentials));
-        if ($token = $this->guard()->attempt($credentials)) {
-            return response()->json(['status' => 'success'], 200)->header('Authorization', $token);
+        if (!$userId = $this->guard()->attempt($credentials)) {
+            return response()->json(['status' => 'error','message' => 'Log in error, check credentials!'], 401);
         }
-        return response()->json(['error' => 'login_error'], 401);
+
+        $client = DB::table('oauth_clients')
+            ->where('password_client', true)
+            ->first(); //could assign different client according to resource
+
+        $data = [
+            'grant_type' => 'password',
+            'client_id' => $client->id,
+            'client_secret' => $client->secret,
+            'username' => Auth::user()->email,
+            'password' => $request->password, //todo for now open password should change
+            'scope' => '*' //could be regulated too
+        ];
+
+        $tokenRequest = Request::create(route('passport.token'), 'POST', $data);
+
+        return app()->handle($tokenRequest);
     }
 
     /**
@@ -51,10 +68,11 @@ class AuthController extends Controller
      */
     public function logout(): JsonResponse
     {
+        //todo make token revoke
         $this->guard()->logout();
         return response()->json([
             'status' => 'success',
-            'msg' => 'Logged out Successfully.'
+            'message' => 'Logged out Successfully.'
         ], 200);
     }
 
@@ -73,14 +91,14 @@ class AuthController extends Controller
     /**
      * @return JsonResponse
      */
-    public function refresh()
+    public function refresh(): JsonResponse
     {
-        if ($token = $this->guard()->refresh()) {
+        if ($userId = $this->guard()->refresh()) {
             return response()
-                ->json(['status' => 'successs'], 200)
-                ->header('Authorization', $token);
+                ->json(['status' => 'success'], 200)
+                ->header('Authorization', $userId);
         }
-        return response()->json(['error' => 'refresh_token_error'], 401);
+        return response()->json(['status' => 'error','message' => 'Token refresh error'], 401);
     }
 
     /**
