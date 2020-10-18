@@ -1,6 +1,6 @@
 <?php
 
-use Illuminate\Http\Request;
+use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -13,13 +13,19 @@ use Illuminate\Support\Facades\Route;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
+Route::prefix('auth')->group(function () {
+    Route::post('register', [AuthController::class, 'register'])->name('register');
+    Route::post('login', [AuthController::class, 'login'])->name('login');
 
-Route::middleware('auth:api')->group(function () {
-    Route::prefix('user')->group(function () {
-        Route::get('profile', [UserProfileController::class, 'show'])->name('profile');
-    });
+    Route::middleware('auth:api')->group(function () {
+        Route::prefix('user')->group(function () {
 
-    Route::fallback(function () { //works only on get mb delete and use middleware instead
-        return response()->json(['message' => 'No such route'], 404);
+            Route::post('logout', [AuthController::class, 'logout'])->name('logout');
+//        Route::get('profile', [UserProfileController::class, 'show'])->name('profile');
+        });
+
+        Route::fallback(function () {
+            return response()->json(['message' => 'No such route'], 404);
+        });
     });
 });

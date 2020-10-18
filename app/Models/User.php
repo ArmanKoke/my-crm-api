@@ -8,6 +8,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
+/**
+ * @property string name
+ * @property string email
+ * @property string password
+ * @property boolean is_social
+ */
 class User extends Authenticatable
 {
     use HasFactory, Notifiable;

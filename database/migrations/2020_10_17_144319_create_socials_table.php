@@ -16,14 +16,12 @@ class CreateSocialsTable extends Migration
     {
         Schema::create('socials', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('social_network_id');
-            $table->json('data')->default(new Expression('(JSON_ARRAY())'));
-            $table->timestamps();
-
             $table->foreignId('social_network_id')->constrained();
+            $table->json('data')->default(new Expression('\'[]\'::JSON')); //in case of mysql (JSON_ARRAY()) type
+            $table->timestamps();
         });
 
-        Schema::create('socials_users', function (Blueprint $table) {
+        Schema::create('socials_users', function (Blueprint $table) { //add foreign keys
             $table->unsignedBigInteger('social_id');
             $table->unsignedBigInteger('user_id');
         });
