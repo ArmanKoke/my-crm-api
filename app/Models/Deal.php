@@ -17,6 +17,13 @@ class Deal extends Model
 {
     use HasFactory;
 
+    protected $fillable = [
+        'company_name',
+        'description',
+        'notes',
+        'status_id',
+    ];
+
     /**
      * @return BelongsTo
      */

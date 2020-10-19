@@ -56,7 +56,7 @@ class DealController extends Controller
         $deal->fill($request->all());
         $deal->save();
 
-        $deal->user()->associate($request->manager_id);
+        $deal->manager()->associate($request->manager_id);
 
         return $deal->load('manager','status');
     }
