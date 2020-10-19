@@ -12,6 +12,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Laravel\Socialite\Facades\Socialite;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 
 class AuthController extends Controller
 {
@@ -22,13 +24,9 @@ class AuthController extends Controller
     public function register(RegisterRequest $request): UserResource
     {
         $user = new User();
-        if($request->is_social) {
-            //add other from api
-            $user->is_social = $request->is_social;
-        } else {
-            $user->email = $request->email;
-            $user->password = ($request->password);
-        }
+        $user->email = $request->email;
+        $user->password = ($request->password);
+
         $user->save();
 
         return new UserResource($user);
@@ -40,6 +38,9 @@ class AuthController extends Controller
      */
     public function login(LoginRequest $request)
     {
+        if ($request->is_social){
+            $this->usingSocial();
+        }
         $credentials = $request->only('email', 'password');
         if (!$userId = $this->guard()->attempt($credentials)) {
             return response()->json(['status' => 'error','message' => 'Log in error, check credentials!'], 401);
@@ -61,6 +62,35 @@ class AuthController extends Controller
         $tokenRequest = Request::create(route('passport.token'), 'POST', $data);
 
         return app()->handle($tokenRequest);
+    }
+
+    public function usingSocial()
+    {
+        $user = $this->handleProviderCallback();
+
+        $user = new User();
+        //$user->email = $user->email;
+        $user->is_social = true;
+
+        $user->save();
+
+        return new UserResource($user);
+    }
+
+    /**
+     * @return \Laravel\Socialite\Contracts\User
+     */
+    public function handleProviderCallback()
+    {
+        return Socialite::driver('google')->user();
+    }
+
+    /**
+     * @return RedirectResponse
+     */
+    public function redirectToProvider()
+    {
+        return Socialite::driver('google')->redirect();
     }
 
     /**

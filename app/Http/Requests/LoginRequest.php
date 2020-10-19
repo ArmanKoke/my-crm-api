@@ -6,6 +6,7 @@ use Illuminate\Foundation\Http\FormRequest;
 
 /**
  * @property string email
+ * @property bool is_social
  */
 class LoginRequest extends FormRequest
 {
