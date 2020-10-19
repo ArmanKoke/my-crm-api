@@ -9,15 +9,21 @@
 
 ## About Project
 
-Simple crm api with socialite and CRUD.
-Uses Laravel Passport for api auth so you need to:
-
-- `php artisan passport:install` run for generating keys
+CRM api that uses Laravel Passport for client authentication (in this case front-end app) 
+and Laravel Socialite for github, google etc. authentication. For now implemented deals CRUD.
 
 ## Deploy
 
 - Create `.env` (note that i am using here pgsql driver)
 - `composer install`
+- `php artisan passport:install` run for generating keys
+- Client side authenticated by token with backend server and user from client side authenticated by email and password
+
+## ToDo
+
+- MakeFile for deploy
+- More Seeders
+- Unit Tests
 
 ## Drawbacks
 

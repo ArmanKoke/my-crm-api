@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\DealRequest;
 use App\Http\Resources\DealResource;
 use App\Models\Deal;
 use Exception;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 
@@ -17,14 +17,14 @@ class DealController extends Controller
      */
     public function index()
     {
-        return Deal::all();
+        return Deal::with('manager','status')->get(); //add pagination soon
     }
 
     /**
-     * @param Request $request
+     * @param DealRequest $request
      * @return DealResource
      */
-    public function store(Request $request): DealResource
+    public function store(DealRequest $request): DealResource
     {
         $deal = new Deal();
         $deal->company_name = $request->company_name;
@@ -47,11 +47,11 @@ class DealController extends Controller
     }
 
     /**
-     * @param Request $request
+     * @param DealRequest $request
      * @param Deal $deal
      * @return Deal
      */
-    public function update(Request $request, Deal $deal)
+    public function update(DealRequest $request, Deal $deal)
     {
         $deal->fill($request->all());
         $deal->save();
@@ -68,8 +68,6 @@ class DealController extends Controller
      */
     public function destroy(Deal $deal): Response
     {
-        $deal->manager()->dissociate();
-        $deal->status()->dissociate();
         $deal->delete();
 
         return response(null, 204);
