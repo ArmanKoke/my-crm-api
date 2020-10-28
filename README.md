@@ -17,6 +17,7 @@ and Laravel Socialite for github, google etc. authentication. For now implemente
 - Create `.env` (note that i am using here pgsql driver)
 - `composer install`
 - `php artisan passport:install` run for generating keys
+- `php artisan migrate --seed`
 - Client side authenticated by token with backend server and user from client side authenticated by email and password
 
 ## ToDo

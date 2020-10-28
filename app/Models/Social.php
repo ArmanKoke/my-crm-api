@@ -7,6 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
+/**
+ * @property int social_network_id
+ * @property string email
+ * @property string data
+ */
 class Social extends Model
 {
     use HasFactory;

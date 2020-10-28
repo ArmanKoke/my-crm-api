@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Http\Resources\User as UserResource;
+use App\Models\Social;
 use App\Models\User;
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Contracts\Auth\StatefulGuard;
@@ -12,6 +13,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Laravel\Socialite\Contracts\User as SocialiteUser;
 use Laravel\Socialite\Facades\Socialite;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
@@ -21,13 +23,16 @@ class AuthController extends Controller
      * @param RegisterRequest $request
      * @return UserResource
      */
-    public function register(RegisterRequest $request): UserResource
+    public function register(RegisterRequest $request): UserResource //todo one register method
     {
-        $user = new User();
+        $user = User::updateOrCreate(['email' => $request->email]);
         $user->email = $request->email;
         $user->password = ($request->password);
-
         $user->save();
+
+        $this->guard()->login($user);
+
+        $token = $this->generateToken($request->password); //todo return auth
 
         return new UserResource($user);
     }
@@ -38,14 +43,52 @@ class AuthController extends Controller
      */
     public function login(LoginRequest $request)
     {
-        if ($request->is_social){
-            $this->usingSocial();
-        }
         $credentials = $request->only('email', 'password');
         if (!$userId = $this->guard()->attempt($credentials)) {
             return response()->json(['status' => 'error','message' => 'Log in error, check credentials!'], 401);
         }
 
+        $token = $this->generateToken($request->password);
+        dd($token);
+
+    }
+
+    public function registerWithSocial(SocialiteUser $userData)
+    {
+        $email = $userData->getEmail();
+        $user = User::where('email',$email)->first();
+
+        if (!$user) {
+            $user = new User();
+            $user->name = $userData->getName();
+            $user->email = $email;
+            $user->is_social = true;
+            $user->save();
+        }
+
+        $social = new Social();
+        //$social->email = $email;
+        $social->social_network_id = 1; //todo change
+        $social->data = json_encode($userData, true);
+        $social->save();
+
+        $social->users()->attach($social);
+
+        //auth
+        $this->guard()->login($user);
+
+        $token = $this->generateToken($user->password);
+        dd($token);
+
+        return new UserResource($user);
+    }
+
+    /**
+     * @param null $password
+     * @return mixed
+     */
+    public function generateToken($password = null)
+    {
         $client = DB::table('oauth_clients')
             ->where('password_client', true)
             ->first(); //could assign different client according to resource
@@ -55,7 +98,7 @@ class AuthController extends Controller
             'client_id' => $client->id,
             'client_secret' => $client->secret,
             'username' => Auth::user()->email,
-            'password' => $request->password, //todo for now open password should change
+            'password' => $password, //todo for now open password should change
             'scope' => '*' //could be regulated too
         ];
 
@@ -64,25 +107,23 @@ class AuthController extends Controller
         return app()->handle($tokenRequest);
     }
 
-    public function usingSocial()
-    {
-        $user = $this->handleProviderCallback();
-
-        $user = new User();
-        //$user->email = $user->email;
-        $user->is_social = true;
-
-        $user->save();
-
-        return new UserResource($user);
-    }
-
     /**
-     * @return \Laravel\Socialite\Contracts\User
+     * @return SocialiteUser
      */
     public function handleProviderCallback()
     {
-        return Socialite::driver('google')->user();
+        try {
+            $user = Socialite::driver('google')->user();
+        } catch (\Exception $exception) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $exception->getMessage()
+            ],$exception->getCode());
+        }
+
+        $a = $this->registerWithSocial($user);
+
+        return $user;
     }
 
     /**

@@ -17,6 +17,7 @@ class CreateSocialsTable extends Migration
         Schema::create('socials', function (Blueprint $table) {
             $table->id();
             $table->foreignId('social_network_id')->constrained();
+            $table->string('email')->unique();
             $table->json('data')->default(new Expression('\'[]\'::JSON')); //in case of mysql (JSON_ARRAY()) type
             $table->timestamps();
         });

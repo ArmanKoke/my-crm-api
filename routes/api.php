@@ -16,9 +16,9 @@ use Illuminate\Support\Facades\Route;
 */
 Route::post('register', [AuthController::class, 'register'])->name('register');
 Route::post('login', [AuthController::class, 'login'])->name('login');
-
-Route::get('redirect', [AuthController::class, 'redirectToProvider'])->name('redirect_to_provider');
-Route::get('callback', [AuthController::class, 'handleProviderCallback'])->name('provider_callback');
+//Route::prefix('google')->group(function () {
+Route::get('redirect', [AuthController::class, 'redirectToProvider'])->name('redirect_to_provider')->middleware('web');
+Route::get('callback', [AuthController::class, 'handleProviderCallback'])->name('provider_callback')->middleware('web');
 
 Route::middleware('auth:api')->group(function () {
     Route::prefix('user')->group(function () {
